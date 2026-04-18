@@ -1,0 +1,59 @@
+@startuml Coworking Reservation System Use Case Diagram
+left to right direction
+
+actor "Guest" as guest
+actor "User" as user
+actor "Admin" as admin
+
+rectangle "Coworking Space Reservation" as System {
+    usecase "Register" as register
+    usecase "Login" as login
+    usecase "Logout" as logout
+
+    usecase "View\nCoworking Spaces" as viewSpaces
+
+    usecase "Manage\nReservations" as manageResv
+    usecase "Update My\nReservation" as updateMyResv
+    usecase "Create\nReservation\n(Maximum 3)" as createResv
+    usecase "View My\nReservations" as viewMyResv
+    usecase "Delete My\nReservation" as deleteMyResv
+
+    usecase "Manage\nCoworking Spaces" as manageSpaces
+    usecase "Update\nCoworking Space" as updateSpace
+    usecase "Create\nCoworking Space" as createSpace
+    usecase "Delete\nCoworking Space" as deleteSpace
+
+    usecase "View All\nReservations" as viewAllResv
+    usecase "Create\nReservation\n(Unlimited)" as createUnlimitedResv
+    usecase "Update Any\nReservation" as updateAnyResv
+    usecase "Delete Any\nReservation" as deleteAnyResv
+}
+
+' Guest
+guest -- register
+guest -- login
+guest -- viewSpaces
+
+' User
+user -- logout
+user -- viewSpaces
+user -- manageResv
+
+manageResv ..> createResv : <<can>>
+manageResv ..> viewMyResv : <<can>>
+manageResv ..> updateMyResv : <<can>>
+manageResv ..> deleteMyResv : <<can>>
+
+' Admin
+admin -- logout
+admin -- manageSpaces
+admin -- viewAllResv
+admin -- createUnlimitedResv
+admin -- updateAnyResv
+admin -- deleteAnyResv
+
+manageSpaces ..> createSpace : <<can>>
+manageSpaces ..> updateSpace : <<can>>
+manageSpaces ..> deleteSpace : <<can>>
+
+@enduml

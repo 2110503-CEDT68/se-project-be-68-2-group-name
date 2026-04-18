@@ -1,0 +1,41 @@
+@startuml Delete CoworkingSpace (DELETE)
+
+header Sample Coworking Sequence Diagram
+title "Delete CoworkingSpace (DELETE) [Admin]"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:coworkingspaces" as routerSpaces
+participant "<<middleware>>\n:auth" as middlewareAuth
+participant "<<controllers>>\n:coworkingSpace" as controllersSpaces
+participant "<<model>>\n:CoworkingSpace" as modelSpace
+participant "<<model>>\n:Reservation" as modelResv
+database "<<MongoDB>>\n:coworkingspaces" as SpacesDatabase
+database "<<MongoDB>>\n:reservations" as ResvDatabase
+
+client->server ++: req.delete('/api/v1/coworkingspaces/{coworkingSpaceId}')
+server->routerSpaces ++: app.use('/api/v1/coworkingspaces', coworkingSpace)
+routerSpaces->middlewareAuth ++: protect + authorize('admin')
+middlewareAuth-->routerSpaces --: next()
+
+routerSpaces->controllersSpaces ++: deleteCoworkingSpace()
+
+controllersSpaces->modelSpace ++: findById(coworkingSpaceId)
+modelSpace->SpacesDatabase ++: query coworkingspaces
+SpacesDatabase-->modelSpace --: coworkingSpace (or null)
+
+alt coworkingSpace not found
+  controllersSpaces->client --: 404 response {success: false}
+else coworkingSpace found
+  controllersSpaces->modelResv ++: deleteMany({coworkingSpace: id})
+  modelResv->ResvDatabase ++: delete reservations by coworkingSpaceId
+  ResvDatabase-->modelResv --: result
+
+  controllersSpaces->modelSpace ++: deleteOne({_id: id})
+  modelSpace->SpacesDatabase ++: delete coworkingSpace
+  SpacesDatabase-->modelSpace --: result
+
+  controllersSpaces->client --: 200 response {success, data:{}}
+end
+
+@enduml

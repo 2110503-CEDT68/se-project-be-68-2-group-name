@@ -1,0 +1,37 @@
+@startuml Update Reservation (PUT)
+
+header Sample Coworking Sequence Diagram
+title "Update Reservation (PUT) [Owner/Admin]"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:reservations" as routerResv
+participant "<<middleware>>\n:auth" as middlewareAuth
+participant "<<controllers>>\n:reservations" as controllersResv
+participant "<<model>>\n:Reservation" as modelResv
+database "<<MongoDB>>\n:reservations" as ResvDatabase
+
+client->server ++: req.put('/api/v1/reservations/{reservationId}')
+server->routerResv ++: app.use('/api/v1/reservations', reservations)
+routerResv->middlewareAuth ++: protect + authorize('user','admin')
+middlewareAuth-->routerResv --: next()
+
+routerResv->controllersResv ++: updateReservation()
+controllersResv->modelResv ++: findById(reservationId)
+modelResv->ResvDatabase ++: query
+ResvDatabase-->modelResv --: reservation (or null)
+
+alt reservation not found
+  controllersResv->client --: 404 No Reservation
+else reservation found
+  alt not owner AND not admin
+    controllersResv->client --: 401 Not authorized
+  else owner/admin ok
+    controllersResv->modelResv ++: findByIdAndUpdate(reservationId, req.body)
+    modelResv->ResvDatabase ++: update
+    ResvDatabase-->modelResv --: updatedReservation
+    controllersResv->client --: 200 response {success, data}
+  end
+end
+
+@enduml

@@ -1,0 +1,32 @@
+@startuml Update CoworkingSpace (PUT)
+
+header Sample Coworking Sequence Diagram
+title "Update CoworkingSpace (PUT) [Admin]"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:coworkingspaces" as routerSpaces
+participant "<<middleware>>\n:auth" as middlewareAuth
+participant "<<controllers>>\n:coworkingSpace" as controllersSpaces
+participant "<<model>>\n:CoworkingSpace" as modelSpace
+database "<<MongoDB>>\n:coworkingspaces" as SpacesDatabase
+
+client->server ++: req.put('/api/v1/coworkingspaces/{coworkingSpaceId}')
+server->routerSpaces ++: app.use('/api/v1/coworkingspaces', coworkingSpace)
+
+routerSpaces->middlewareAuth ++: protect + authorize('admin')
+middlewareAuth-->routerSpaces --: next()
+
+routerSpaces->controllersSpaces ++: updateCoworkingSpace()
+
+controllersSpaces->modelSpace ++: findByIdAndUpdate(coworkingSpaceId, req.body, {new:true, runValidators:true})
+modelSpace->SpacesDatabase ++: update coworkingSpace
+SpacesDatabase-->modelSpace --: updatedCoworkingSpace (or null)
+
+alt coworkingSpace not found
+  controllersSpaces->client --: 404 No CoworkingSpace
+else coworkingSpace updated
+  controllersSpaces->client --: 200 response {success, data}
+end
+
+@enduml

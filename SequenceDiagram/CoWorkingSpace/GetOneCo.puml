@@ -1,0 +1,27 @@
+@startuml Get One CoworkingSpace (GET)
+
+header Sample Coworking Sequence Diagram
+title "Get One CoworkingSpace (GET)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:coworkingspaces" as routerSpaces
+participant "<<controllers>>\n:coworkingSpace" as controllersSpaces
+participant "<<model>>\n:CoworkingSpace" as modelSpace
+database "<<MongoDB>>\n:coworkingspaces" as SpacesDatabase
+
+client->server ++: req.get('/api/v1/coworkingspaces/{coworkingSpaceId}')
+server->routerSpaces ++: app.use('/api/v1/coworkingspaces', coworkingSpace)
+routerSpaces->controllersSpaces ++: getCoworkingSpace()
+
+controllersSpaces->modelSpace ++: findById(coworkingSpaceId)
+modelSpace->SpacesDatabase ++: query coworkingspaces
+SpacesDatabase-->modelSpace --: coworkingSpace (or null)
+
+alt coworkingSpace not found
+  controllersSpaces->client --: 404 No CoworkingSpace
+else coworkingSpace found
+  controllersSpaces->client --: 200 response {success, data}
+end
+
+@enduml

@@ -1,0 +1,92 @@
+@startuml
+left to right direction
+
+package "Coworking Reservation API" {
+
+  class "<<Application>>\nCoworkingReservationService" as AppService {}
+
+  package "Auth" {
+    class "<<Resource>>\nAuth" as ResourceAuth {
+      <<POST>> +register(): AuthResponse
+      <<POST>> +login(): AuthResponse
+      <<GET>> +logout(): void
+      <<GET>> +getMe(): User
+    }
+
+    class "<<Representation>>\nUser" as RepresentationUser {
+      -name
+      -email
+      -tel
+      -password
+      -role
+      -createdAt
+    }
+
+    class "<<Representation>>\nAuthResponse" as RepresentationAuthResponse {
+      -success
+      -token
+    }
+  }
+
+  package "CoworkingSpace" {
+    class "<<Resource>>\nCoworkingSpaces" as ResourceCoworkingSpaces {
+      <<GET>> +getCoworkingSpaces(): CoworkingSpace
+      <<POST>> +createCoworkingSpace(): CoworkingSpace
+    }
+
+    class "<<Resource>>\nCoworkingSpace" as ResourceCoworkingSpace {
+      <<GET>> +getCoworkingSpace(): CoworkingSpace
+      <<PUT>> +updateCoworkingSpace(): CoworkingSpace
+      <<DELETE>> +deleteCoworkingSpace(): void
+    }
+
+    class "<<Representation>>\nCoworkingSpace" as RepresentationCoworkingSpace {
+      -name
+      -address
+      -tel
+      -openCloseTime
+      -createdAt
+    }
+  }
+
+  package "Reservation" {
+    class "<<Resource>>\nReservations" as ResourceReservations {
+      <<GET>> +getReservations(): Reservation
+      <<POST>> +addReservation(): Reservation
+    }
+
+    class "<<Resource>>\nReservation" as ResourceReservation {
+      <<GET>> +getReservation(): Reservation
+      <<PUT>> +updateReservation(): Reservation
+      <<DELETE>> +deleteReservation(): void
+    }
+
+    class "<<Representation>>\nReservation" as RepresentationReservation {
+      -resvDate
+      -user
+      -coworkingSpace
+      -createdAt
+    }
+  }
+}
+
+AppService ..> ResourceAuth : "/auth\n<<Path>>"
+AppService ..> ResourceCoworkingSpaces : "/coworkingspaces\n<<Path>>"
+AppService ..> ResourceReservations : "/reservations\n<<Path>>"
+
+ResourceCoworkingSpaces ..> ResourceCoworkingSpace : "/{coworkingSpaceId}\n<<Path>>"
+ResourceCoworkingSpaces ..> ResourceReservations : "/{coworkingSpaceId}/reservations\n<<Path>>"
+ResourceReservations ..> ResourceReservation : "/{reservationId}\n<<Path>>"
+
+ResourceAuth ..> RepresentationUser : "<<use>>"
+ResourceAuth ..> RepresentationAuthResponse : "<<use>>"
+
+ResourceCoworkingSpaces ..> RepresentationCoworkingSpace : "<<use>>"
+ResourceCoworkingSpace ..> RepresentationCoworkingSpace : "<<use>>"
+
+ResourceReservations ..> RepresentationReservation : "<<use>>"
+ResourceReservation ..> RepresentationReservation : "<<use>>"
+
+@enduml
+
+
