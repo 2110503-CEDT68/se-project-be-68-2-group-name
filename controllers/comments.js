@@ -184,3 +184,37 @@ exports.deleteComment = async (req, res, next) => {
         });
     }
 };
+
+exports.reportComment = async (req, res, next) => {
+    try {
+        const comment = await Comment.findById(req.params.id);
+
+        if (!comment) {
+            return res.status(404).json({
+                success: false,
+                message: `No comment with the id of ${req.params.id}`
+            });
+        }
+
+        comment.reportCount += 1;
+
+        if (comment.reportCount === 0) {
+            comment.reportStatus = 'clean';
+        } else {
+            comment.reportStatus = 'reported';
+        }
+
+        await comment.save();
+
+        res.status(200).json({
+            success: true,
+            data: comment
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Cannot report comment'
+        });
+    }
+};

@@ -23,6 +23,15 @@ const CommentSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    reportCount: {
+        type: Number,
+        default: 0
+    },
+    reportStatus: {
+        type: String,
+        enum: ['clean', 'reported'],
+        default: 'clean'
+    },
     createdAt: {
         type: Date,
         default: Date.now
