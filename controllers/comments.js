@@ -95,6 +95,7 @@ exports.addComment = async (req, res, next) => {
         req.body.user = req.user.id;
 
         const comment = await Comment.create(req.body);
+        await Comment.calculateAverageRating(req.params.coworkingSpaceId);
 
         res.status(201).json({
             success: true,
@@ -133,6 +134,8 @@ exports.updateComment = async (req, res, next) => {
             runValidators: true
         });
 
+        await Comment.calculateAverageRating(comment.coworkingSpace);
+
         res.status(200).json({
             success: true,
             data: comment
@@ -166,6 +169,8 @@ exports.deleteComment = async (req, res, next) => {
         }
 
         await comment.deleteOne();
+
+        await Comment.calculateAverageRating(comment.coworkingSpace);
 
         res.status(200).json({
             success: true,

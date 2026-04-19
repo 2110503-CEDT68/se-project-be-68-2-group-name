@@ -32,11 +32,20 @@ const CoworkingSpaceSchema = new mongoose.Schema({
   price: {
     type: String,
     required: [true, 'Please add a price'],
+  },
+  averageRating: {
+    type: Number,
+    default: 0
+  },
+  ratingsQuantity: {
+    type: Number,
+    default: 0
   }
 }, {
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
 
 CoworkingSpaceSchema.virtual('reservations', {
   ref: 'Reservation',
