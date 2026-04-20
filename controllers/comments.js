@@ -1,5 +1,6 @@
 const Comment = require('../models/Comment');
 const CoworkingSpace = require('../models/CoworkingSpace');
+const User = require('../models/User');
 
 
 exports.getComments = async (req, res, next) => {
@@ -11,12 +12,12 @@ exports.getComments = async (req, res, next) => {
                 coworkingSpace: req.params.coworkingSpaceId
             }).populate({
                 path: 'user',
-                select: 'name email'
+                select: 'name email isBlocked'
             });
         } else {
             query = Comment.find().populate({
                 path: 'user',
-                select: 'name email'
+                select: 'name email isBlocked'
             }).populate({
                 path: 'coworkingSpace',
                 select: 'name address'
@@ -45,7 +46,7 @@ exports.getComment = async (req, res, next) => {
         const comment = await Comment.findById(req.params.id)
             .populate({
                 path: 'user',
-                select: 'name email'
+                select: 'name email isBlocked'
             })
             .populate({
                 path: 'coworkingSpace',
@@ -88,6 +89,15 @@ exports.addComment = async (req, res, next) => {
             return res.status(404).json({
                 success: false,
                 message: `No CoworkingSpace with the id of ${req.params.coworkingSpaceId}`
+            });
+        }
+
+        // Check if user is blocked
+        const requestingUser = await User.findById(req.user._id);
+        if (requestingUser && requestingUser.isBlocked) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been blocked. You cannot post comments.'
             });
         }
 
@@ -215,6 +225,76 @@ exports.reportComment = async (req, res, next) => {
         return res.status(500).json({
             success: false,
             message: 'Cannot report comment'
+        });
+    }
+};
+
+// @desc    Block a user (admin only)
+// @route   PUT /api/v1/comments/block/:userId
+// @access  Admin
+exports.blockUser = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: `No user found with id ${req.params.userId}`
+            });
+        }
+
+        if (user.role === 'admin') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot block an admin account'
+            });
+        }
+
+        user.isBlocked = true;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: `User ${user.name} has been blocked`,
+            data: { userId: user._id, name: user.name, isBlocked: user.isBlocked }
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Cannot block user'
+        });
+    }
+};
+
+
+// @desc    Unblock a user (admin only)
+// @route   PUT /api/v1/comments/unblock/:userId
+// @access  Admin
+exports.unblockUser = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.params.userId);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: `No user found with id ${req.params.userId}`
+            });
+        }
+
+        user.isBlocked = false;
+        await user.save();
+
+        res.status(200).json({
+            success: true,
+            message: `User ${user.name} has been unblocked`,
+            data: { userId: user._id, name: user.name, isBlocked: user.isBlocked }
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Cannot unblock user'
         });
     }
 };
