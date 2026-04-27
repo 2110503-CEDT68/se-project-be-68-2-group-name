@@ -12,6 +12,7 @@
   "dependencies": {
     "@exortek/express-mongo-sanitize": "^1.1.1",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
@@ -23,9 +24,11 @@
     "hpp": "^0.2.3",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.1",
+    "multer": "^2.1.1",
     "newman": "^6.2.2",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
