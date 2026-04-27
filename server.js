@@ -1,27 +1,27 @@
-//import { setServers } from "node:dns/promises";
 const { setServers } = require("node:dns/promises");
-
 setServers(["1.1.1.1", "8.8.8.8"]);
 
 const express = require('express');
 const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
+const { xss } = require('express-xss-sanitizer');
+const rateLimit = require('express-rate-limit');
+const hpp = require('hpp');
+const cors = require('cors');
+
+// ✅ โหลด env ก่อน require ไฟล์อื่นทั้งหมด (สำคัญมาก — cloudinary.js อ่าน env ตอน require)
+dotenv.config({ path: './config/config.env' });
+
+const connectDB = require('./config/db');
 const reservations = require('./routes/reservations');
 const auth = require('./routes/auth');
 const coworkingSpace = require('./routes/coworkingSpace');
 const comments = require('./routes/comments');
-const cookieParser = require('cookie-parser');
-const connectDB = require('./config/db');
-const mongoSanitize = require('express-mongo-sanitize');
-const helmet = require('helmet');
-const {xss} = require('express-xss-sanitizer');
-const rateLimit = require('express-rate-limit');
-const hpp = require('hpp');
-const cors = require('cors');
 const customEmojis = require('./routes/customEmojis');
 const reactions = require('./routes/reactions');
 
-// Load env vars
-dotenv.config({ path: './config/config.env' });
 connectDB();
 
 const app = express();
@@ -29,35 +29,40 @@ app.use(express.json());
 app.use(cookieParser());
 app.set('query parser', 'extended');
 
-//Sanitize
+// Sanitize
 app.use((req, res, next) => {
-  Object.defineProperty(req, 'query', {
-    value: { ...req.query },
-    writable: true,
-    configurable: true,
-    enumerable: true,
-  });
-  next();
+    Object.defineProperty(req, 'query', {
+        value: { ...req.query },
+        writable: true,
+        configurable: true,
+        enumerable: true,
+    });
+    next();
 });
 app.use(mongoSanitize());
 
-//Helmet
+// Helmet
 app.use(helmet());
 
-//Prevent XSS
-app.use(xss());
+// ✅ XSS — ข้าม multipart/form-data เพราะ xss() อาจ corrupt binary file buffer
+app.use((req, res, next) => {
+    if (req.headers['content-type'] && req.headers['content-type'].startsWith('multipart/form-data')) {
+        return next();
+    }
+    return xss()(req, res, next);
+});
 
-//Rate Limiting
-const limiter=rateLimit({
-    windowMs:10*60*1000,//10 mins
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
     max: 100
 });
 app.use(limiter);
 
-//Prevent http param pollutions 
+// Prevent http param pollution
 app.use(hpp());
 
-//Enable CORS
+// Enable CORS
 app.use(cors());
 
 app.use('/api/v1/coworkingspaces', coworkingSpace);
@@ -68,7 +73,7 @@ app.use('/api/v1/custom-emojis', customEmojis);
 app.use('/api/v1', reactions);
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, console.log('Server running in ' + process.env.NODE_ENV + ' mode on port ' + PORT));
+const server = app.listen(PORT, () => console.log('Server running in ' + process.env.NODE_ENV + ' mode on port ' + PORT));
 
 process.on('unhandledRejection', (err, promise) => {
     console.log(`Error: ${err.message}`);

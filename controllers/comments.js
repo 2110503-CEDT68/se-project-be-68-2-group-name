@@ -7,6 +7,8 @@ exports.getComments = async (req, res, next) => {
     try {
         let query;
 
+        const Reaction = require('../models/Reaction');
+
         if (req.params.coworkingSpaceId) {
             query = Comment.find({
                 coworkingSpace: req.params.coworkingSpaceId
@@ -26,10 +28,21 @@ exports.getComments = async (req, res, next) => {
 
         const comments = await query.sort('-createdAt');
 
+        // Attach reactions to each comment
+        const commentsWithReactions = await Promise.all(
+            comments.map(async (comment) => {
+                const reactions = await Reaction.find({
+                    comment: comment._id,
+                    status: 'active'
+                }).populate('user', 'name email').populate('customEmoji', 'name imageUrl status');
+                return { ...comment.toObject(), reactions };
+            })
+        );
+
         res.status(200).json({
             success: true,
-            count: comments.length,
-            data: comments
+            count: commentsWithReactions.length,
+            data: commentsWithReactions
         });
     } catch (error) {
         console.log(error);
@@ -207,12 +220,7 @@ exports.reportComment = async (req, res, next) => {
         }
 
         comment.reportCount += 1;
-
-        if (comment.reportCount === 0) {
-            comment.reportStatus = 'clean';
-        } else {
-            comment.reportStatus = 'reported';
-        }
+        comment.reportStatus = 'reported';
 
         await comment.save();
 
