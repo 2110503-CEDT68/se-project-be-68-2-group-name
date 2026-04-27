@@ -178,7 +178,7 @@ exports.deleteComment = async (req, res, next) => {
             });
         }
 
-        await comment.deleteOne();  // FIXME soft delete
+        await comment.deleteOne();
 
         await Comment.calculateAverageRating(comment.coworkingSpace);
 
