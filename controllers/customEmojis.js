@@ -1,5 +1,6 @@
 const cloudinary = require('../config/cloudinary');
 const CustomEmoji = require('../models/CustomEmoji');
+const Reaction = require('../models/Reaction');
 
 const uploadToCloudinary = (fileBuffer) => {
     return new Promise((resolve, reject) => {
@@ -101,18 +102,28 @@ exports.deleteCustomEmoji = async (req, res) => {
             });
         }
 
-        await cloudinary.uploader.destroy(emoji.publicId);
+        await Reaction.deleteMany({
+            customEmoji: emoji._id
+        });
+
+        if (emoji.publicId) {
+            await cloudinary.uploader.destroy(emoji.publicId);
+        }
 
         await emoji.deleteOne();
 
         res.status(200).json({
             success: true,
+            message: 'Custom emoji and related reactions deleted',
             data: {}
         });
     } catch (error) {
+        console.error('DELETE CUSTOM EMOJI ERROR:', error);
+
         res.status(500).json({
             success: false,
-            message: 'Cannot delete custom emoji'
+            message: 'Cannot delete custom emoji',
+            error: error.message
         });
     }
 };
