@@ -13,12 +13,14 @@ const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db');
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet = require('helmet');
-const {xss} = require('express-xss-sanitizer');
+const { xss } = require('express-xss-sanitizer');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cors = require('cors');
 const customEmojis = require('./routes/customEmojis');
 const reactions = require('./routes/reactions');
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerUI = require('swagger-ui-express');
 
 
 // Load env vars
@@ -49,9 +51,9 @@ app.use(helmet());
 app.use(xss());
 
 //Rate Limiting
-const limiter=rateLimit({
-    windowMs:10*60*1000,//10 mins
-    max: 100
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000,//10 mins
+  max: 100
 });
 app.use(limiter);
 
@@ -60,6 +62,41 @@ app.use(hpp());
 
 //Enable CORS
 app.use(cors());
+
+// Swagger
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Coworking Space API',
+      version: '1.0.0',
+      description: 'API documentation for coworking space backend'
+    },
+    servers: [
+      {
+        url: 'http://localhost:5000',
+        description: 'Local server'
+      },
+      {
+        url: 'https://your-backend-url.vercel.app',
+        description: 'Production server'
+      }
+    ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      }
+    }
+  },
+  apis: ['./routes/*.js', './controllers/*.js']
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 app.use('/api/v1/coworkingspaces', coworkingSpace);
 app.use('/api/v1/auth', auth);
@@ -72,6 +109,6 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, console.log('Server running in ' + process.env.NODE_ENV + ' mode on port ' + PORT));
 
 process.on('unhandledRejection', (err, promise) => {
-    console.log(`Error: ${err.message}`);
-    server.close(() => process.exit(1));
+  console.log(`Error: ${err.message}`);
+  server.close(() => process.exit(1));
 });

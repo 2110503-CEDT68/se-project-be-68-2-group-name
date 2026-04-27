@@ -29,13 +29,17 @@ const uploadToCloudinary = (fileBuffer) => {
 
 exports.uploadCustomEmoji = async (req, res) => {
     try {
-        console.log('BODY:', req.body);
-        console.log('FILE:', req.file);
-
         if (!req.file) {
             return res.status(400).json({
                 success: false,
                 message: 'Please upload an image'
+            });
+        }
+
+        if (!req.body.name) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please add emoji name'
             });
         }
 
@@ -64,7 +68,6 @@ exports.uploadCustomEmoji = async (req, res) => {
         });
     }
 };
-
 exports.getMyCustomEmojis = async (req, res) => {
     try {
         const emojis = await CustomEmoji.find({
@@ -123,6 +126,31 @@ exports.deleteCustomEmoji = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Cannot delete custom emoji',
+            error: error.message
+        });
+    }
+};
+
+// GET /api/v1/custom-emojis
+exports.getAllCustomEmojis = async (req, res) => {
+    try {
+        const emojis = await CustomEmoji.find({
+            status: 'active'
+        })
+            .populate('user', 'name email')
+            .sort('-createdAt');
+
+        res.status(200).json({
+            success: true,
+            count: emojis.length,
+            data: emojis
+        });
+    } catch (error) {
+        console.error('GET ALL CUSTOM EMOJIS ERROR:', error);
+
+        res.status(500).json({
+            success: false,
+            message: 'Cannot get custom emojis',
             error: error.message
         });
     }

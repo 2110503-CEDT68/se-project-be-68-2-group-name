@@ -9,7 +9,7 @@ module.exports = {
     '!**/node_modules/**'
   ],
   coverageReporters: ['text', 'lcov', 'html'],
-  setupFilesAfterFramework: [],
+  setupFilesAfterEnv: [],
   testTimeout: 10000,
   verbose: true
 };

@@ -18,6 +18,8 @@ const upload = multer({
     }
 });
 
-
-
 module.exports = upload;
+
+// for testing
+module.exports.fileFilter = fileFilter;
+module.exports.storage = storage;
