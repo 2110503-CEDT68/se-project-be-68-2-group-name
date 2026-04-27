@@ -17,6 +17,8 @@ const {xss} = require('express-xss-sanitizer');
 const rateLimit = require('express-rate-limit');
 const hpp = require('hpp');
 const cors = require('cors');
+const customEmojis = require('./routes/customEmojis');
+const reactions = require('./routes/reactions');
 
 // Load env vars
 dotenv.config({ path: './config/config.env' });
@@ -62,6 +64,8 @@ app.use('/api/v1/coworkingspaces', coworkingSpace);
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/reservations', reservations);
 app.use('/api/v1/comments', comments);
+app.use('/api/v1/custom-emojis', customEmojis);
+app.use('/api/v1', reactions);
 
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, console.log('Server running in ' + process.env.NODE_ENV + ' mode on port ' + PORT));
